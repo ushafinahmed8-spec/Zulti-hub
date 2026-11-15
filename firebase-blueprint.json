@@ -1,0 +1,387 @@
+{
+  "entities": {
+    "ReferralSubmission": {
+      "title": "ReferralSubmission",
+      "description": "A referral record created when a user shares the referral link and submits the referred person's username.",
+      "type": "object",
+      "properties": {
+        "submitterUid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the submitting user.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "submitterEmail": {
+          "type": "string",
+          "format": "email",
+          "description": "Auth email identifier of the submitting user.",
+          "minLength": 3,
+          "maxLength": 160
+        },
+        "submitterName": {
+          "type": "string",
+          "description": "Display name of the submitting user.",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "referrerUsername": {
+          "type": "string",
+          "description": "The username of the user who shared the link.",
+          "minLength": 2,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_.@-]+$"
+        },
+        "referredUsername": {
+          "type": "string",
+          "description": "The username of the person the referral link was shared with.",
+          "minLength": 2,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_.@-]+$"
+        },
+        "referralCode": {
+          "type": "string",
+          "description": "The referral code used for the submission.",
+          "minLength": 3,
+          "maxLength": 32,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "referralLink": {
+          "type": "string",
+          "description": "The full referral URL shared by the user.",
+          "minLength": 10,
+          "maxLength": 200
+        },
+        "shareChannel": {
+          "type": "string",
+          "description": "The channel used to share the referral link.",
+          "enum": ["WhatsApp", "Telegram", "Facebook", "Direct Link", "Other"],
+          "maxLength": 30
+        },
+        "note": {
+          "type": "string",
+          "description": "Optional note provided by the user.",
+          "maxLength": 300
+        },
+        "status": {
+          "type": "string",
+          "description": "Review status controlled by the admin.",
+          "enum": ["pending", "verified", "rejected"],
+          "maxLength": 20
+        },
+        "adminNote": {
+          "type": "string",
+          "description": "Optional feedback note from the admin.",
+          "maxLength": 300
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the referral was submitted."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the referral was last updated."
+        }
+      },
+      "required": [
+        "submitterUid",
+        "submitterEmail",
+        "submitterName",
+        "referrerUsername",
+        "referredUsername",
+        "referralCode",
+        "referralLink",
+        "shareChannel",
+        "note",
+        "status",
+        "adminNote",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "BkashWithdrawal": {
+      "title": "BkashWithdrawal",
+      "description": "A bKash money withdrawal request submitted by a user and processed by the admin.",
+      "type": "object",
+      "properties": {
+        "submitterUid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the requesting user.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "submitterUsername": {
+          "type": "string",
+          "description": "Username of the requesting user.",
+          "minLength": 2,
+          "maxLength": 40,
+          "pattern": "^[a-zA-Z0-9_.-]+$"
+        },
+        "submitterName": {
+          "type": "string",
+          "description": "Display name of the requesting user.",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "bkashNumber": {
+          "type": "string",
+          "description": "11-digit Bangladesh bKash mobile number.",
+          "minLength": 11,
+          "maxLength": 11,
+          "pattern": "^01[3-9][0-9]{8}$"
+        },
+        "accountType": {
+          "type": "string",
+          "description": "bKash wallet account type.",
+          "enum": ["Personal", "Agent"],
+          "maxLength": 20
+        },
+        "amount": {
+          "type": "number",
+          "description": "Requested withdrawal amount in BDT."
+        },
+        "status": {
+          "type": "string",
+          "description": "Payout status controlled by the admin.",
+          "enum": ["pending", "paid", "rejected"],
+          "maxLength": 20
+        },
+        "trxId": {
+          "type": "string",
+          "description": "bKash transaction ID entered by the admin upon payout.",
+          "maxLength": 64
+        },
+        "adminNote": {
+          "type": "string",
+          "description": "Optional payout or rejection note from the admin.",
+          "maxLength": 300
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the withdrawal was requested."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the withdrawal was last updated."
+        }
+      },
+      "required": [
+        "submitterUid",
+        "submitterUsername",
+        "submitterName",
+        "bkashNumber",
+        "accountType",
+        "amount",
+        "status",
+        "trxId",
+        "adminNote",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User account profile provisioned by the admin with username login and bonus tracking.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the user.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "username": {
+          "type": "string",
+          "description": "Unique lowercase login username created by admin.",
+          "minLength": 2,
+          "maxLength": 40,
+          "pattern": "^[a-zA-Z0-9_.-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User's display name.",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "savedUsername": {
+          "type": "string",
+          "description": "User's preferred referral handle.",
+          "minLength": 2,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_.@-]+$"
+        },
+        "role": {
+          "type": "string",
+          "description": "Account role.",
+          "enum": ["user"],
+          "maxLength": 20
+        },
+        "status": {
+          "type": "string",
+          "description": "Account status controlled by admin.",
+          "enum": ["active", "suspended"],
+          "maxLength": 20
+        },
+        "bonusBalance": {
+          "type": "number",
+          "description": "Optional manual balance bonus in BDT credited by admin."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the profile was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the profile was last updated."
+        }
+      },
+      "required": [
+        "uid",
+        "username",
+        "displayName",
+        "savedUsername",
+        "role",
+        "status",
+        "bonusBalance",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CampaignSetting": {
+      "title": "CampaignSetting",
+      "description": "Publicly readable referral campaign and bKash payout configuration managed by the admin.",
+      "type": "object",
+      "properties": {
+        "referralCode": {
+          "type": "string",
+          "description": "Active referral code.",
+          "minLength": 3,
+          "maxLength": 32,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "referralLink": {
+          "type": "string",
+          "description": "Active referral link URL.",
+          "minLength": 10,
+          "maxLength": 200
+        },
+        "campaignTitle": {
+          "type": "string",
+          "description": "Title shown on the referral portal.",
+          "minLength": 3,
+          "maxLength": 120
+        },
+        "instructions": {
+          "type": "string",
+          "description": "Instructions shown to users before submitting.",
+          "minLength": 5,
+          "maxLength": 500
+        },
+        "rewardPerReferral": {
+          "type": "number",
+          "description": "BDT earned per verified referral."
+        },
+        "minWithdrawAmount": {
+          "type": "number",
+          "description": "Minimum BDT required for bKash withdrawal."
+        },
+        "updatedBy": {
+          "type": "string",
+          "description": "Admin UID that last updated the campaign config.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the last config update."
+        }
+      },
+      "required": [
+        "referralCode",
+        "referralLink",
+        "campaignTitle",
+        "instructions",
+        "rewardPerReferral",
+        "minWithdrawAmount",
+        "updatedBy",
+        "updatedAt"
+      ]
+    },
+    "AdminLock": {
+      "title": "AdminLock",
+      "description": "Immutable lock created after initial admin password setup.",
+      "type": "object",
+      "properties": {
+        "initialized": {
+          "type": "boolean",
+          "description": "Indicates admin password account has been bootstrapped."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of admin initialization."
+        }
+      },
+      "required": ["initialized", "createdAt"]
+    },
+    "AdminAccount": {
+      "title": "AdminAccount",
+      "description": "Verified administrator record for RBAC lookup.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Admin Firebase Auth UID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Admin auth email.",
+          "minLength": 3,
+          "maxLength": 160
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when admin record was created."
+        }
+      },
+      "required": ["uid", "email", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/referrals/{referralId}": {
+      "schema": { "$ref": "#/entities/ReferralSubmission" },
+      "description": "Stores user-submitted referred usernames for admin verification."
+    },
+    "/withdrawals/{withdrawalId}": {
+      "schema": { "$ref": "#/entities/BkashWithdrawal" },
+      "description": "Stores bKash withdrawal requests submitted by users."
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Stores admin-provisioned user accounts and balances."
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/CampaignSetting" },
+      "description": "Stores referralConfig and adminLock documents."
+    },
+    "/admins/{adminUid}": {
+      "schema": { "$ref": "#/entities/AdminAccount" },
+      "description": "Stores the bootstrapped password-authenticated admin record."
+    }
+  }
+}

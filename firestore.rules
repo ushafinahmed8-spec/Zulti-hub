@@ -1,0 +1,370 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global safety net: deny all by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && request.auth.token.email == 'admin@zulti.app'
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isActiveUser() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'active';
+    }
+
+    function isValidReferralSubmission(data) {
+      return data.keys().hasAll([
+          'submitterUid',
+          'submitterEmail',
+          'submitterName',
+          'referrerUsername',
+          'referredUsername',
+          'referralCode',
+          'referralLink',
+          'shareChannel',
+          'note',
+          'status',
+          'adminNote',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'submitterUid',
+          'submitterEmail',
+          'submitterName',
+          'referrerUsername',
+          'referredUsername',
+          'referralCode',
+          'referralLink',
+          'shareChannel',
+          'note',
+          'status',
+          'adminNote',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.submitterUid is string && data.submitterUid.size() >= 1 && data.submitterUid.size() <= 128 && data.submitterUid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.submitterEmail is string && data.submitterEmail.size() >= 3 && data.submitterEmail.size() <= 160
+        && data.submitterName is string && data.submitterName.size() >= 1 && data.submitterName.size() <= 80
+        && data.referrerUsername is string && data.referrerUsername.size() >= 2 && data.referrerUsername.size() <= 64 && data.referrerUsername.matches('^[a-zA-Z0-9_.@-]+$')
+        && data.referredUsername is string && data.referredUsername.size() >= 2 && data.referredUsername.size() <= 64 && data.referredUsername.matches('^[a-zA-Z0-9_.@-]+$')
+        && data.referralCode is string && data.referralCode.size() >= 3 && data.referralCode.size() <= 32 && data.referralCode.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.referralLink is string && data.referralLink.size() >= 10 && data.referralLink.size() <= 200
+        && data.shareChannel is string && data.shareChannel.size() <= 30 && data.shareChannel in ['WhatsApp', 'Telegram', 'Facebook', 'Direct Link', 'Other']
+        && data.note is string && data.note.size() <= 300
+        && data.status is string && data.status.size() <= 20 && data.status in ['pending', 'verified', 'rejected']
+        && data.adminNote is string && data.adminNote.size() <= 300
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidBkashWithdrawal(data) {
+      return data.keys().hasAll([
+          'submitterUid',
+          'submitterUsername',
+          'submitterName',
+          'bkashNumber',
+          'accountType',
+          'amount',
+          'status',
+          'trxId',
+          'adminNote',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'submitterUid',
+          'submitterUsername',
+          'submitterName',
+          'bkashNumber',
+          'accountType',
+          'amount',
+          'status',
+          'trxId',
+          'adminNote',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.submitterUid is string && data.submitterUid.size() >= 1 && data.submitterUid.size() <= 128 && data.submitterUid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.submitterUsername is string && data.submitterUsername.size() >= 2 && data.submitterUsername.size() <= 40 && data.submitterUsername.matches('^[a-zA-Z0-9_.-]+$')
+        && data.submitterName is string && data.submitterName.size() >= 1 && data.submitterName.size() <= 80
+        && data.bkashNumber is string && data.bkashNumber.size() == 11 && data.bkashNumber.matches('^01[3-9][0-9]{8}$')
+        && data.accountType is string && data.accountType.size() <= 20 && data.accountType in ['Personal', 'Agent']
+        && (data.amount is int || data.amount is float) && data.amount >= 10 && data.amount <= 500000
+        && data.status is string && data.status.size() <= 20 && data.status in ['pending', 'paid', 'rejected']
+        && data.trxId is string && data.trxId.size() <= 64
+        && data.adminNote is string && data.adminNote.size() <= 300
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll([
+          'uid',
+          'username',
+          'displayName',
+          'savedUsername',
+          'role',
+          'status',
+          'bonusBalance',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid',
+          'username',
+          'displayName',
+          'savedUsername',
+          'role',
+          'status',
+          'bonusBalance',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.username is string && data.username.size() >= 2 && data.username.size() <= 40 && data.username.matches('^[a-zA-Z0-9_.-]+$')
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 80
+        && data.savedUsername is string && data.savedUsername.size() >= 2 && data.savedUsername.size() <= 64 && data.savedUsername.matches('^[a-zA-Z0-9_.@-]+$')
+        && data.role is string && data.role == 'user'
+        && data.status is string && data.status in ['active', 'suspended']
+        && (data.bonusBalance is int || data.bonusBalance is float) && data.bonusBalance >= 0 && data.bonusBalance <= 1000000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCampaignSetting(data) {
+      return data.keys().hasAll([
+          'referralCode',
+          'referralLink',
+          'campaignTitle',
+          'instructions',
+          'rewardPerReferral',
+          'minWithdrawAmount',
+          'updatedBy',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'referralCode',
+          'referralLink',
+          'campaignTitle',
+          'instructions',
+          'rewardPerReferral',
+          'minWithdrawAmount',
+          'updatedBy',
+          'updatedAt'
+        ])
+        && data.referralCode is string && data.referralCode.size() >= 3 && data.referralCode.size() <= 32 && data.referralCode.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.referralLink is string && data.referralLink.size() >= 10 && data.referralLink.size() <= 200
+        && data.campaignTitle is string && data.campaignTitle.size() >= 3 && data.campaignTitle.size() <= 120
+        && data.instructions is string && data.instructions.size() >= 5 && data.instructions.size() <= 500
+        && (data.rewardPerReferral is int || data.rewardPerReferral is float) && data.rewardPerReferral >= 0 && data.rewardPerReferral <= 100000
+        && (data.minWithdrawAmount is int || data.minWithdrawAmount is float) && data.minWithdrawAmount >= 10 && data.minWithdrawAmount <= 100000
+        && data.updatedBy is string && data.updatedBy.size() >= 1 && data.updatedBy.size() <= 128 && data.updatedBy.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAdminLock(data) {
+      return data.keys().hasAll(['initialized', 'createdAt'])
+        && data.keys().hasOnly(['initialized', 'createdAt'])
+        && data.initialized is bool
+        && data.initialized == true
+        && data.createdAt is timestamp;
+    }
+
+    function isValidAdminAccount(data) {
+      return data.keys().hasAll(['uid', 'email', 'createdAt'])
+        && data.keys().hasOnly(['uid', 'email', 'createdAt'])
+        && data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.email is string && data.email == 'admin@zulti.app'
+        && data.createdAt is timestamp;
+    }
+
+    match /referrals/{referralId} {
+      allow get: if isValidId(referralId) && (isAdmin() || isOwner(existing().submitterUid));
+      allow list: if isSignedIn() && (resource.data.submitterUid == request.auth.uid || request.auth.token.email == 'admin@zulti.app');
+
+      allow create: if isSignedIn()
+        && isValidId(referralId)
+        && isValidReferralSubmission(incoming())
+        && (isActiveUser() || isAdmin())
+        && incoming().submitterUid == request.auth.uid
+        && incoming().submitterEmail == request.auth.token.email
+        && incoming().status == 'pending'
+        && incoming().adminNote == ''
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isSignedIn()
+        && isValidId(referralId)
+        && isValidReferralSubmission(incoming())
+        && incoming().submitterUid == existing().submitterUid
+        && incoming().submitterEmail == existing().submitterEmail
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'adminNote', 'updatedAt']))
+          || (
+            isOwner(existing().submitterUid)
+            && isActiveUser()
+            && existing().status == 'pending'
+            && incoming().status == 'pending'
+            && incoming().adminNote == existing().adminNote
+            && incoming().diff(existing()).affectedKeys().hasOnly(['referrerUsername', 'referredUsername', 'shareChannel', 'note', 'updatedAt'])
+          )
+        );
+
+      allow delete: if isValidId(referralId) && (
+        isAdmin() || (isOwner(existing().submitterUid) && existing().status == 'pending')
+      );
+    }
+
+    match /withdrawals/{withdrawalId} {
+      allow get: if isValidId(withdrawalId) && (isAdmin() || isOwner(existing().submitterUid));
+      allow list: if isSignedIn() && (resource.data.submitterUid == request.auth.uid || request.auth.token.email == 'admin@zulti.app');
+
+      allow create: if isSignedIn()
+        && isValidId(withdrawalId)
+        && isValidBkashWithdrawal(incoming())
+        && (isActiveUser() || isAdmin())
+        && incoming().submitterUid == request.auth.uid
+        && incoming().status == 'pending'
+        && incoming().trxId == ''
+        && incoming().adminNote == ''
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isSignedIn()
+        && isValidId(withdrawalId)
+        && isValidBkashWithdrawal(incoming())
+        && incoming().submitterUid == existing().submitterUid
+        && incoming().submitterUsername == existing().submitterUsername
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && isAdmin()
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'trxId', 'adminNote', 'updatedAt']);
+
+      allow delete: if isValidId(withdrawalId) && (
+        isAdmin() || (isOwner(existing().submitterUid) && existing().status == 'pending')
+      );
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isSignedIn() && request.auth.token.email == 'admin@zulti.app';
+
+      allow create: if isAdmin()
+        && isValidId(userId)
+        && isValidUserProfile(incoming())
+        && incoming().uid == userId
+        && incoming().role == 'user'
+        && incoming().status == 'active'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isSignedIn()
+        && isValidId(userId)
+        && isValidUserProfile(incoming())
+        && incoming().uid == existing().uid
+        && incoming().username == existing().username
+        && incoming().role == existing().role
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'savedUsername', 'status', 'bonusBalance', 'updatedAt']))
+          || (
+            isOwner(userId)
+            && incoming().status == existing().status
+            && incoming().bonusBalance == existing().bonusBalance
+            && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'savedUsername', 'updatedAt'])
+          )
+        );
+
+      allow delete: if isAdmin() && isValidId(userId);
+    }
+
+    match /admins/{adminUid} {
+      allow get: if isValidId(adminUid) && isOwner(adminUid);
+      allow list: if false;
+
+      allow create: if isSignedIn()
+        && isValidId(adminUid)
+        && request.auth.uid == adminUid
+        && request.auth.token.email == 'admin@zulti.app'
+        && isValidAdminAccount(incoming())
+        && incoming().uid == adminUid
+        && incoming().createdAt == request.time
+        && !exists(/databases/$(database)/documents/settings/adminLock);
+
+      allow update, delete: if false;
+    }
+
+    match /settings/{settingId} {
+      allow get: if isValidId(settingId) && (settingId == 'referralConfig' || settingId == 'adminLock');
+      allow list: if false;
+
+      allow create: if isSignedIn()
+        && isValidId(settingId)
+        && (
+          (
+            settingId == 'adminLock'
+            && request.auth.token.email == 'admin@zulti.app'
+            && isValidAdminLock(incoming())
+            && incoming().createdAt == request.time
+          )
+          || (
+            settingId == 'referralConfig'
+            && isAdmin()
+            && isValidCampaignSetting(incoming())
+            && incoming().updatedBy == request.auth.uid
+            && incoming().updatedAt == request.time
+          )
+        );
+
+      allow update: if isAdmin()
+        && isValidId(settingId)
+        && settingId == 'referralConfig'
+        && isValidCampaignSetting(incoming())
+        && incoming().updatedBy == request.auth.uid
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'referralCode',
+          'referralLink',
+          'campaignTitle',
+          'instructions',
+          'rewardPerReferral',
+          'minWithdrawAmount',
+          'updatedBy',
+          'updatedAt'
+        ]);
+
+      allow delete: if false;
+    }
+  }
+}
